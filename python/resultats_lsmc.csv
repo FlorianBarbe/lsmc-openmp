@@ -1,0 +1,2 @@
+S0,K,r,sigma,T,N_steps,N_paths,Prix_Seq,Temps_Seq,Prix_OpenMP,Temps_OpenMP,Speedup
+100,100,0.05,0.2,1,50,10000,6.09763,0.640175,6.23563,0.878127,0.729023

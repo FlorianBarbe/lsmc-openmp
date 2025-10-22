@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
     // Simulation GBM
     auto paths = GBM::simulatePaths(S0, r, sigma, T, N_steps, N_paths);
-    GBM::exportCSV(paths, "../../output/trajectoires_gbm.csv");
+    GBM::exportCSV(paths, "trajectoires_gbm.csv");
 
     // Mesure temps séquentiel
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 #endif
 
     // Export des résultats dans un CSV
-    std::ofstream f("../../output/resultats_lsmc.csv", std::ios::app);
+    std::ofstream f("resultats_lsmc.csv", std::ios::app);
     if (f.tellp() == 0) {
         f << "S0,K,r,sigma,T,N_steps,N_paths,Prix_Seq,Temps_Seq,Prix_OpenMP,Temps_OpenMP,Speedup\n";
     }
