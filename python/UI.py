@@ -34,11 +34,13 @@ exe_path = st.sidebar.text_input(
     r"C:\Users\flole\Desktop\lsmc\x64\Debug\lsmc.exe"
 )
 
-output_dir = "../../output"
+# Les CSV sont dans le dossier Python
+python_dir = os.path.dirname(__file__)
 csv_paths = {
-    "trajectoires": os.path.join(output_dir, "trajectoires_gbm.csv"),
-    "resultats": os.path.join(output_dir, "resultats_lsmc.csv"),
+    "trajectoires": os.path.join(python_dir, "trajectoires_gbm.csv"),
+    "resultats": os.path.join(python_dir, "resultats_lsmc.csv"),
 }
+
 
 # ------------------------------------------------
 # === 2. Lancement du C++ ===

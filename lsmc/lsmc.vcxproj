@@ -42,6 +42,17 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\python\analyse_convergence.py" />
+    <None Include="..\python\comparaisons_threads.py" />
+    <None Include="..\python\comparaison_surface.py" />
+    <None Include="..\python\heatmap.py" />
+    <None Include="..\python\resultats_lsmc.csv" />
+    <None Include="..\python\trajectoires2.py" />
+    <None Include="..\python\trajectoires_gbm.csv" />
+    <None Include="..\python\UI.py" />
+    <None Include="..\python\visualisation.py" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
