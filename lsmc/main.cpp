@@ -1,29 +1,17 @@
 /**
- * main.cpp
+ * main.cpp — version intégrée Streamlit
  * ------------------------------------------------------------
- * Programme principal du projet LSMC (Longstaff–Schwartz Monte Carlo)
- * ------------------------------------------------------------
- * Objectif :
- *   Estimer le prix d’un put américain en utilisant la méthode
- *   de Longstaff–Schwartz (régression polynomiale + Monte Carlo).
+ * Exécutable principal appelé depuis l’interface Streamlit.
+ * Lit les paramètres passés en argument, exécute la simulation
+ * LSMC pour un put américain, mesure le temps et exporte les
+ * résultats au format CSV.
  *
- * Fonctionnement :
- *   - Génère un grand nombre de trajectoires du sous-jacent (GBM)
- *   - Applique une régression OLS pour la valeur de continuation
- *   - Compare payoff immédiat / continuation pour déterminer l’exercice
- *
- * Parallélisation :
- *   La simulation Monte Carlo est parallélisée avec OpenMP.
- *   Le nombre de threads utilisés dépend de la variable d’environnement :
- *     OMP_NUM_THREADS = k
- *   (définie automatiquement par le script Python ou manuellement)
- *
- * Utilisation :
- *   ./lsmc.exe [N_paths]
- *   (si aucun argument n’est fourni, N_paths = 20000 par défaut)
+ * Usage :
+ *   lsmc.exe S0 K r sigma T N_steps N_paths
  */
 
 #include <iostream>
+#include <fstream>
 #include <chrono>
 #include <string>
 #include "lsmc.hpp"
@@ -34,60 +22,64 @@
 #endif
 
 int main(int argc, char** argv) {
-    // --- Paramètres du modèle ---
-    double S0 = 100.0;     // Prix initial
-    double K = 100.0;      // Strike
-    double r = 0.05;       // Taux d'intérêt
-    double sigma = 0.2;    // Volatilité
-    double T = 1.0;        // Maturité (en années)
-    int N_steps = 50;      // Nombre de pas temporels
-    int N_paths = 20000;   // Nombre de trajectoires simulées
+    if (argc < 8) {
+        std::cerr << "Usage : lsmc.exe S0 K r sigma T N_steps N_paths\n";
+        return 1;
+    }
 
-    // Si un argument est fourni, il remplace N_paths
-    if (argc > 1)
-        N_paths = std::stoi(argv[1]);
+    // Lecture des arguments
+    double S0 = std::stod(argv[1]);
+    double K = std::stod(argv[2]);
+    double r = std::stod(argv[3]);
+    double sigma = std::stod(argv[4]);
+    double T = std::stod(argv[5]);
+    int N_steps = std::stoi(argv[6]);
+    int N_paths = std::stoi(argv[7]);
 
-    // --- Informations sur le parallélisme ---
 #ifdef _OPENMP
     int nthreads = omp_get_max_threads();
-    std::cout << "[INFO] OpenMP activé (" << nthreads << " threads disponibles)" << std::endl;
+    std::cout << "[INFO] OpenMP activé (" << nthreads << " threads)" << std::endl;
 #else
-    std::cout << "[INFO] OpenMP non activé (exécution séquentielle)" << std::endl;
+    std::cout << "[INFO] Exécution séquentielle" << std::endl;
 #endif
 
-    std::cout << "[INFO] Simulation de " << N_paths << " trajectoires avec "
-        << N_steps << " pas de temps..." << std::endl;
-
-    // === Simulation GBM ===
-    std::cout << "[INFO] Simulation de " << N_paths << " trajectoires..." << std::endl;
+    // Simulation GBM
     auto paths = GBM::simulatePaths(S0, r, sigma, T, N_steps, N_paths);
-
-    // Export CSV pour visualisation Python
     GBM::exportCSV(paths, "../../output/trajectoires_gbm.csv");
 
+    // Mesure temps séquentiel
+    auto t1 = std::chrono::high_resolution_clock::now();
+    double price_seq = LSMC::priceAmericanPut(S0, K, r, sigma, T, N_steps, N_paths);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    double time_seq = std::chrono::duration<double>(t2 - t1).count();
 
-    // --- Calcul du prix ---
-    auto start = std::chrono::high_resolution_clock::now();
-
-    double price = LSMC::priceAmericanPut(S0, K, r, sigma, T, N_steps, N_paths);
-
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-
-    // --- Affichage des résultats ---
-    std::cout << "\n=== Résultats ===" << std::endl;
-    std::cout << "Prix estimé du put américain : " << price << std::endl;
-    std::cout << "Temps d'exécution : " << elapsed.count() << " secondes" << std::endl;
-
+    // Mesure temps OpenMP (simulation parallèle)
 #ifdef _OPENMP
-    std::cout << "[INFO] Calcul effectué en parallèle sur " << nthreads << " threads." << std::endl;
+    auto t3 = std::chrono::high_resolution_clock::now();
+    double price_omp = LSMC::priceAmericanPut(S0, K, r, sigma, T, N_steps, N_paths);
+    auto t4 = std::chrono::high_resolution_clock::now();
+    double time_omp = std::chrono::duration<double>(t4 - t3).count();
+    double speedup = time_seq / time_omp;
 #else
-    std::cout << "[INFO] Calcul effectué en mode séquentiel." << std::endl;
+    double price_omp = price_seq;
+    double time_omp = time_seq;
+    double speedup = 1.0;
 #endif
 
-    std::cout << "=================\n" << std::endl;
+    // Export des résultats dans un CSV
+    std::ofstream f("../../output/resultats_lsmc.csv", std::ios::app);
+    if (f.tellp() == 0) {
+        f << "S0,K,r,sigma,T,N_steps,N_paths,Prix_Seq,Temps_Seq,Prix_OpenMP,Temps_OpenMP,Speedup\n";
+    }
+    f << S0 << "," << K << "," << r << "," << sigma << "," << T << ","
+        << N_steps << "," << N_paths << ","
+        << price_seq << "," << time_seq << ","
+        << price_omp << "," << time_omp << "," << speedup << "\n";
+    f.close();
 
+    std::cout << "\n=== Résultats ===" << std::endl;
+    std::cout << "Prix séquentiel : " << price_seq << " (" << time_seq << " s)\n";
+    std::cout << "Prix OpenMP     : " << price_omp << " (" << time_omp << " s)\n";
+    std::cout << "Speedup         : " << speedup << "x\n";
     return 0;
 }
-
-
