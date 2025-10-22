@@ -23,20 +23,20 @@ Ce module constitue la base d’une chaîne complète de pricing, depuis la gén
 
 ```mermaid
 graph TD
-    A[main.cpp<br/><small>Point d'entrée du programme</small>]
-    B[GBM<br/><small>Simulation du Mouvement Brownien Géométrique</small>]
-    C[LSMC<br/><small>Algorithme de Longstaff-Schwartz<br/>(pricing option américaine)</small>]
-    D[Regression<br/><small>Régression polynomiale (OLS)</small>]
-    E[RNG<br/><small>Générateur aléatoire (Box-Muller, Mersenne Twister)</small>]
-    F[Export CSV<br/><small>Sortie des trajectoires simulées</small>]
-    G[Python scripts<br/><small>Analyse et visualisation</small>]
+    A[main.cpp — point d'entrée du programme]
+    B[GBM — simulation du mouvement brownien géométrique]
+    C[LSMC — algorithme de Longstaff-Schwartz pour option américaine]
+    D[Regression — régression polynomiale OLS]
+    E[RNG — générateur aléatoire Box-Muller / Mersenne Twister]
+    F[Export CSV — écriture des trajectoires simulées]
+    G[Python scripts — analyse et visualisation]
 
-    A -->|Configure paramètres S₀, K, r, σ, T, N_steps, N_paths| B
+    A -->|Configure paramètres S0, K, r, σ, T, N_steps, N_paths| B
     A -->|Appelle la fonction de pricing| C
-    C -->|Demande les trajectoires simulées| B
-    C -->|Effectue les régressions backward| D
-    D -->|Renvoie les coefficients β| C
-    B -->|Utilise le générateur normal N(0,1)| E
+    C -->|Utilise trajectoires de prix| B
+    C -->|Réalise régressions backward| D
+    D -->|Renvoie coefficients de régression| C
+    B -->|Utilise RNG pour tirages normaux| E
     B -->|Produit N_paths trajectoires| F
-    F -->|Sauvegarde sous trajectoires_gbm.csv| G
-    G -->|Affiche les trajectoires et la moyenne| G
+    F -->|trajectoires_gbm.csv| G
+
