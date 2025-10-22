@@ -13,6 +13,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Python">
+      <UniqueIdentifier>{6047faf7-6a8c-4506-98bc-e89713e73262}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rng.hpp">
@@ -50,5 +53,34 @@
     <ClCompile Include="test_regression.cpp">
       <Filter>src</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\python\analyse_convergence.py">
+      <Filter>Python</Filter>
+    </None>
+    <None Include="..\python\comparaison_surface.py">
+      <Filter>Python</Filter>
+    </None>
+    <None Include="..\python\comparaisons_threads.py">
+      <Filter>Python</Filter>
+    </None>
+    <None Include="..\python\heatmap.py">
+      <Filter>Python</Filter>
+    </None>
+    <None Include="..\python\resultats_lsmc.csv">
+      <Filter>Python</Filter>
+    </None>
+    <None Include="..\python\trajectoires_gbm.csv">
+      <Filter>Python</Filter>
+    </None>
+    <None Include="..\python\trajectoires2.py">
+      <Filter>Python</Filter>
+    </None>
+    <None Include="..\python\UI.py">
+      <Filter>Python</Filter>
+    </None>
+    <None Include="..\python\visualisation.py">
+      <Filter>Python</Filter>
+    </None>
   </ItemGroup>
 </Project>
