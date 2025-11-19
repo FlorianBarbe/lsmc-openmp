@@ -9,7 +9,10 @@
 
 class RNG {
 public:
-    RNG() : gen(std::random_device{}()), dist(0.0, 1.0) {}
+    // Nouveau : constructeur avec seed (OBLIGATOIRE pour simulatePaths)
+    RNG(int seed = std::random_device{}())
+        : gen(seed), dist(0.0, 1.0) {
+    }
 
     // Retourne un échantillon de loi normale N(0,1)
     double normal() {
