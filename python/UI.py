@@ -1,135 +1,44 @@
 # ================================================================
-# UI.py — Interface Streamlit du projet LSMC (C++ + OpenMP)
-# ================================================================
-# - Interface de contrôle des paramètres de simulation
-# - Exécution du binaire C++ avec ces paramètres
-# - Lecture automatique des CSV produits
-# - Visualisation des trajectoires et des performances
+# UI.py — Page d'accueil de l'application multipages LSMC
 # ================================================================
 
-import os
-import subprocess
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
 
 st.set_page_config(page_title="LSMC OpenMP", layout="wide")
-st.title("💻 Simulation LSMC (C++ + OpenMP)")
 
-# ------------------------------------------------
-# === 1. Paramètres utilisateur ===
-# ------------------------------------------------
-st.sidebar.header("Paramètres d'entrée")
+# Titre principal
+st.title("📘 Projet LSMC — Pricing d’options américaines (C++ + OpenMP)")
 
-S0 = st.sidebar.slider("Prix initial S₀", 50.0, 200.0, 100.0)
-K = st.sidebar.slider("Strike K", 50.0, 200.0, 100.0)
-r = st.sidebar.slider("Taux sans risque r", 0.0, 0.1, 0.05)
-sigma = st.sidebar.slider("Volatilité σ", 0.01, 0.5, 0.2)
-T = st.sidebar.slider("Maturité (années)", 0.25, 5.0, 1.0)
-N_steps = st.sidebar.slider("Nombre de pas temporels", 10, 200, 50)
-N_paths = st.sidebar.slider("Nombre de trajectoires", 1000, 50000, 10000)
-exe_path = st.sidebar.text_input(
-    "Chemin vers l'exécutable lsmc.exe",
-    r"C:\Users\flole\Desktop\lsmc\x64\Debug\lsmc.exe"
-)
+# Introduction
+st.write("""
+Bienvenue dans l'application interactive du projet **Least Squares Monte Carlo (LSMC)** 
+développée en C++ avec parallélisation OpenMP.
 
-# Les CSV sont dans le dossier Python
-python_dir = os.path.dirname(__file__)
-csv_paths = {
-    "trajectoires": os.path.join(python_dir, "trajectoires_gbm.csv"),
-    "resultats": os.path.join(python_dir, "resultats_lsmc.csv"),
-}
+Cette interface Streamlit permet de :
 
+### 🔧 1. Lancer une simulation complète
+- génération de trajectoires GBM,
+- calcul backward LSMC (régression OLS),
+- exécution séquentielle + OpenMP,
+- export automatique des CSV.
 
-# ------------------------------------------------
-# === 2. Lancement du C++ ===
-# ------------------------------------------------
-st.subheader("⚙️ Exécution du modèle C++")
+### 📈 2. Visualiser les trajectoires simulées
+- jusqu'à 50 trajectoires affichées,
+- moyenne analytique,
+- comparaison variance / volatilité.
 
-if st.button("Lancer la simulation"):
-    cmd = [
-        exe_path,
-        str(S0), str(K), str(r), str(sigma),
-        str(T), str(N_steps), str(N_paths)
-    ]
-    st.info(f"Commande exécutée : {' '.join(cmd)}")
+### 🚀 3. Analyser les performances du code C++
+- comparaison séquentiel vs OpenMP,
+- speedup,
+- influence de N_paths et N_steps.
 
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        st.text(result.stdout)
-        st.success("✅ Simulation terminée.")
-    except subprocess.CalledProcessError as e:
-        st.error("Erreur lors de l'exécution du modèle C++")
-        st.text(e.stderr)
-    except FileNotFoundError:
-        st.error("❌ Fichier lsmc.exe introuvable. Vérifie le chemin indiqué.")
-    except Exception as e:
-        st.error(f"Erreur inattendue : {e}")
+### 📚 4. Comprendre la méthode LSMC
+- rappel du modèle GBM,
+- régression polynomiale (Longstaff & Schwartz),
+- backward induction,
+- structure de ton code C++.
 
-# ------------------------------------------------
-# === 3. Lecture des trajectoires simulées ===
-# ------------------------------------------------
-st.subheader("📈 Trajectoires simulées")
+Utilisez le menu de gauche pour accéder aux différentes pages.
+""")
 
-if os.path.exists(csv_paths["trajectoires"]):
-    try:
-        paths = np.loadtxt(csv_paths["trajectoires"], delimiter=",")
-        t = np.linspace(0, T, paths.shape[1])
-
-        fig, ax = plt.subplots(figsize=(8, 4))
-        for p in paths[:50]:  # affiche les 50 premières trajectoires
-            ax.plot(t, p, lw=0.8, alpha=0.5, color="gray")
-        ax.plot(t, np.mean(paths, axis=0), lw=2, color="cyan", label="Moyenne")
-        ax.set_xlabel("Temps (années)")
-        ax.set_ylabel("Prix du sous-jacent")
-        ax.legend()
-        st.pyplot(fig)
-    except Exception as e:
-        st.warning(f"Impossible de lire {csv_paths['trajectoires']} : {e}")
-else:
-    st.info("Aucune trajectoire simulée encore disponible.")
-
-# ------------------------------------------------
-# === 4. Lecture des résultats agrégés ===
-# ------------------------------------------------
-st.subheader("📊 Analyse des performances (resultats_lsmc.csv)")
-
-if os.path.exists(csv_paths["resultats"]):
-    try:
-        df = pd.read_csv(csv_paths["resultats"], encoding="latin1")
-        st.dataframe(df.tail(10), use_container_width=True)
-
-        # Courbe 1 : temps séquentiel vs OpenMP
-        fig1, ax1 = plt.subplots()
-        ax1.plot(df["N_paths"], df["Temps_Seq"], marker="o", label="Séquentiel")
-        ax1.plot(df["N_paths"], df["Temps_OpenMP"], marker="o", label="OpenMP")
-        ax1.set_xlabel("N_paths")
-        ax1.set_ylabel("Temps (s)")
-        ax1.set_title("Comparaison des temps d'exécution")
-        ax1.legend()
-        st.pyplot(fig1)
-
-        # Courbe 2 : Speedup
-        fig2, ax2 = plt.subplots()
-        ax2.plot(df["N_paths"], df["Speedup"], color="green", marker="s")
-        ax2.axhline(1, color="red", linestyle="--", linewidth=1)
-        ax2.set_xlabel("N_paths")
-        ax2.set_ylabel("Speedup (T_seq / T_par)")
-        ax2.set_title("Accélération OpenMP")
-        st.pyplot(fig2)
-
-        # Courbe 3 : Convergence du prix
-        fig3, ax3 = plt.subplots()
-        ax3.plot(df["N_paths"], df["Prix_Seq"], label="Séquentiel", linestyle="--")
-        ax3.plot(df["N_paths"], df["Prix_OpenMP"], label="OpenMP", linestyle="-")
-        ax3.set_xlabel("N_paths")
-        ax3.set_ylabel("Prix estimé")
-        ax3.set_title("Convergence du prix estimé")
-        ax3.legend()
-        st.pyplot(fig3)
-
-    except Exception as e:
-        st.error(f"Erreur de lecture du CSV : {e}")
-else:
-    st.info("Le fichier resultats_lsmc.csv n'a pas encore été généré.")
+st.info("Sélectionnez une page dans la barre latérale pour commencer.")
