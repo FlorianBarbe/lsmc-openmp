@@ -96,3 +96,4 @@ Nous présentons ici la démarche complète que nous avons suivie pour étudier 
 """)
 
 st.info("Utilisez la barre latérale suivre les étapes")
+##test 
