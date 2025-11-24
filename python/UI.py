@@ -95,4 +95,4 @@ Le menu latéral permet d’accéder à chacune des pages pour :
 Nous présentons ici la démarche complète que nous avons suivie pour étudier une méthode numérique fondamentale avant d’aborder les approches plus avancées basées sur le Deep Learning.
 """)
 
-st.info("Utilisez la barre latérale pour accéder aux différentes sections de l'application.")
+st.info("Utilisez la barre latérale suivre les étapes")
