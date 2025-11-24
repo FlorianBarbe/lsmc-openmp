@@ -1,4 +1,4 @@
-#include "gbm.hpp"
+﻿#include "gbm.hpp"
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -7,9 +7,7 @@ GBM::GBM(double S0, double r, double sigma, double T, int N_steps)
     : S0(S0), r(r), sigma(sigma), T(T), N_steps(N_steps) {
 }
 
-// -------------------------------------------
-// Simule UNE trajectoire (m�thode membre)
-// -------------------------------------------
+// Simulation d'une trajectoire
 std::vector<double> GBM::simulate(RNG& rng) {
     std::vector<double> path(N_steps + 1);
     double dt = T / N_steps;
@@ -24,9 +22,7 @@ std::vector<double> GBM::simulate(RNG& rng) {
     return path;
 }
 
-// -------------------------------------------
-// Simule PLUSIEURS trajectoires (m�thode statique)
-// -------------------------------------------
+// Simulation de plusieurs trajectoires
 std::vector<std::vector<double>> GBM::simulatePaths(
     double S0, double r, double sigma, double T, int N_steps, int N_paths)
 {
@@ -44,24 +40,39 @@ std::vector<std::vector<double>> GBM::simulatePaths(
     return paths;
 }
 
-// -------------------------------------------
-// Export CSV
-// -------------------------------------------
+// Export de trajectoires_gbm.csv
 void GBM::exportCSV(
     const std::vector<std::vector<double>>& paths,
     const std::string& filename)
 {
-    std::ofstream f(filename);
+    std::ofstream f(filename, std::ios::trunc);
 
-    if (!f.is_open()) return;
+    if (!f.is_open()) {
+        std::cerr << "[ERREUR] Impossible d'ouvrir le fichier : "
+            << filename << "\n";
+        return;
+    }
 
-    for (const auto& p : paths) {
-        for (size_t i = 0; i < p.size(); ++i) {
-            f << std::fixed << std::setprecision(6) << p[i];
-            if (i + 1 < p.size()) f << ",";
+    const size_t cols = paths[0].size();
+
+    for (size_t p = 0; p < paths.size(); ++p) {
+
+        // sécurité : ligne anormale → on saute
+        if (paths[p].size() != cols) {
+            std::cerr << "[AVERTISSEMENT] Ligne "
+                << p
+                << " ignorée (taille incorrecte)\n";
+            continue;
+        }
+
+        for (size_t i = 0; i < cols; ++i) {
+            f << std::fixed << std::setprecision(6) << paths[p][i];
+            if (i + 1 < cols) f << ",";
         }
         f << "\n";
     }
 
+    f.flush();
     f.close();
 }
+
