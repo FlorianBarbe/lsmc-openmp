@@ -5,6 +5,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
+st.title("Compilation de la simulation de la méthode LSMC")
+
 st.write("""
 Cette page permet de lancer la simulation complète du modèle LSMC que nous avons développée en C++.
 L’objectif est de pouvoir tester différents paramètres (prix initial, volatilité, nombre de trajectoires, etc.)

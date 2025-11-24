@@ -1,6 +1,6 @@
 ﻿import streamlit as st
 
-st.title("Explications théoriques — Méthode LSMC")
+st.title("Explications théoriques de la méthode")
 
 st.write("""
 Cette page présente les idées principales derrière la méthode que nous utilisons pour estimer
