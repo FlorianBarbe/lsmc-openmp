@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+st.title("Pour les performances, ça donne quoi?")
+
 st.write("""
 Dans cette partie de l’application, nous étudions les performances de notre programme LSMC.
 Le cœur du problème est simple : pour estimer le prix d’une option américaine, nous devons simuler un très grand nombre de trajectoires. 
