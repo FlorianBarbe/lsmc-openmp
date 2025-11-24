@@ -2,6 +2,9 @@
 #include <cmath>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
+#include <filesystem>
+
 
 GBM::GBM(double S0, double r, double sigma, double T, int N_steps)
     : S0(S0), r(r), sigma(sigma), T(T), N_steps(N_steps) {
@@ -45,11 +48,13 @@ void GBM::exportCSV(
     const std::vector<std::vector<double>>& paths,
     const std::string& filename)
 {
-    std::ofstream f(filename, std::ios::trunc);
+    const std::string tmpname = filename + ".tmp";
 
+    // 1) Écriture dans un fichier temporaire
+    std::ofstream f(tmpname, std::ios::trunc);
     if (!f.is_open()) {
-        std::cerr << "[ERREUR] Impossible d'ouvrir le fichier : "
-            << filename << "\n";
+        std::cerr << "[ERREUR] Impossible d'ouvrir le fichier temporaire : "
+            << tmpname << "\n";
         return;
     }
 
@@ -57,7 +62,6 @@ void GBM::exportCSV(
 
     for (size_t p = 0; p < paths.size(); ++p) {
 
-        // sécurité : ligne anormale → on saute
         if (paths[p].size() != cols) {
             std::cerr << "[AVERTISSEMENT] Ligne "
                 << p
@@ -74,5 +78,20 @@ void GBM::exportCSV(
 
     f.flush();
     f.close();
+
+    // 2) Remplacement atomique : écrase l'ancien d'un seul coup
+    try {
+        std::filesystem::rename(tmpname, filename);
+    }
+    catch (std::filesystem::filesystem_error& e) {
+        // Si le rename échoue (Windows si fichier verrouillé), on supprime l'ancien puis on réessaie
+        std::cerr << "[INFO] Rename impossible, tentative de suppression : "
+            << e.what() << "\n";
+
+        std::error_code ec;
+        std::filesystem::remove(filename, ec);   // supprime l'ancien sans arrêter le programme
+        std::filesystem::rename(tmpname, filename);
+    }
 }
+
 
