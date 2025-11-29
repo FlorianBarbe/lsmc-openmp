@@ -1,6 +1,4 @@
-============================================================
  PROJET LSMC - PRICING D'OPTIONS AMÉRICAINES EN C++ (OpenMP)
-============================================================
 
 1. OBJECTIF
 ------------
@@ -160,7 +158,7 @@ Exécution :
 
 ------------------------------------------------------------
 
-ettoyage du dépôt – Novembre 2025
+Nettoyage du dépôt – Novembre 2025
 
 Le dépôt contenait des fichiers générés très lourds (trajectoires_gbm.csv ~213 Mo) qui avaient été commités par erreur.
 GitHub refuse tout fichier > 100 Mo, ce qui bloquait les opérations git push :
