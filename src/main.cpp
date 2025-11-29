@@ -1,4 +1,5 @@
 //main.cpp — version pour séquentiel + multi-threads
+//test si les push remarchent
 
 #include <iostream>
 #include <fstream>
