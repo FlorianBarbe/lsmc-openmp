@@ -1,9 +1,4 @@
-/**
- * main.cpp — version clean pour Streamlit + CSV multi-threads
- * -----------------------------------------------------------
- * Usage :
- *   lsmc.exe S0 K r sigma T N_steps N_paths
- */
+//main.cpp — version pour séquentiel + multi-threads
 
 #include <iostream>
 #include <fstream>
