@@ -20,26 +20,16 @@ Modules :
 
 2. STRUCTURE DU PROJET
 ----------------------
-lsmc/
-│
-├── include/
-│   ├── gbm.hpp          : déclaration de la classe GBM
-│   ├── regression.hpp   : fonctions de régression OLS
-│   ├── rng.hpp          : générateur de nombres aléatoires
-│   └── lsmc.hpp         : logique du modèle Longstaff-Schwartz
-│
-├── src/
-│   ├── gbm.cpp          : implémentation de la classe GBM
-│   ├── regression.cpp   : régression par moindres carrés
-│   ├── rng.cpp          : tirages normaux standard
-│   ├── lsmc.cpp         : algorithme LSMC complet
-│   └── main.cpp         : point d’entrée du programme
-│
-├── x64/Debug/
-│   └── visualisation.py : script de visualisation Python
-│
-└── output/
-    └── trajectoires_gbm.csv : trajectoires simulées (export C++)
+lsmc-openmp/
+    include/        # Headers : GBM, LSMC, régression OLS, RNG
+    src/            # Implémentations CPU + OpenMP + main.cpp
+    cuda/           # Version GPU (CUDA) : kernels et expérimentation
+    python/         # Scripts de visualisation et analyse
+    docs/           # Documentation, rapports, images
+    .gitignore      # Ignore CSV, binaires, x64/, Debug/, etc.
+    lsmc.sln        # Solution Visual Studio
+    README.md       # Documentation principale
+
 
 ------------------------------------------------------------
 
