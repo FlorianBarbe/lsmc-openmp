@@ -160,9 +160,27 @@ Exécution :
 
 ------------------------------------------------------------
 
-9. AUTEUR
----------
-Projet développé par :
- - Florian Barbe et Narjisse
-Dans le cadre du module LSMC (Méthodes de pricing)
-École Centrale de Nantes - 2025
+ettoyage du dépôt – Novembre 2025
+
+Le dépôt contenait des fichiers générés très lourds (trajectoires_gbm.csv ~213 Mo) qui avaient été commités par erreur.
+GitHub refuse tout fichier > 100 Mo, ce qui bloquait les opérations git push :
+
+push bloqué à 72%
+
+erreurs RPC failed et HTTP 408
+
+“remote end hung up unexpectedly”
+
+J’ai effectué un nettoyage complet :
+
+ajout d’un .gitignore pour ignorer automatiquement les fichiers volumineux
+
+purge de l’historique Git via git filter-repo
+
+suppression définitive des blobs > 100 Mo
+
+réinstallation propre de Git + Git Credential Manager Core
+
+push forcé pour mettre à jour GitHub
+
+Le dépôt est maintenant propre, léger et compatible avec GitHub.
