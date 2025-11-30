@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include "rng.hpp"
-
+using namespace std;
 // -----------------------------------------------------------------------------
 // Classe GBM (Geometric Brownian Motion) qui regroupe les fonctions liées au mouvement brownien géométrique.
 // Elle sert à :
@@ -26,12 +26,10 @@ public:
     GBM(double S0, double r, double sigma, double T, int N_steps);
 
     // Simule UNE trajectoire
-    std::vector<double> simulate(RNG& rng);
+    void simulate_path(RNG& rng, double* path_out);
 
     // Simule PLUSIEURS trajectoires
-    static std::vector<std::vector<double>> simulatePaths(
-        double S0, double r, double sigma, double T, int N_steps, int N_paths
-    );
+    static void simulatePaths(double* paths,double S0, double r, double sigma, double T, int N_steps, int N_paths);
 
     // Exporte un tableau de trajectoires dans un CSV
     static void exportCSV(

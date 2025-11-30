@@ -70,17 +70,13 @@
     <None Include="python\pages\4_Explications_LSMC.py">
       <Filter>Python\pages</Filter>
     </None>
-    <None Include="python\resultats_lsmc.csv">
-      <Filter>Python</Filter>
-    </None>
-    <None Include="python\trajectoires_gbm.csv">
-      <Filter>Python</Filter>
-    </None>
     <None Include="python\UI.py">
       <Filter>Python</Filter>
     </None>
-    <None Include="cuda\lsmc_cuda.cu">
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="lsmc_cuda.cu">
       <Filter>cuda</Filter>
-    </None>
+    </CudaCompile>
   </ItemGroup>
 </Project>

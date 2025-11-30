@@ -35,13 +35,13 @@
     <ClInclude Include="include\rng.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cuda\lsmc_cuda.cu" />
+    <CudaCompile Include="lsmc_cuda.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
     <None Include="python\pages\1_Simulation.py" />
     <None Include="python\pages\2_Trajectoires_GBM.py" />
     <None Include="python\pages\3_Performance_OpenMP.py" />
     <None Include="python\pages\4_Explications_LSMC.py" />
-    <None Include="python\resultats_lsmc.csv" />
-    <None Include="python\trajectoires_gbm.csv" />
     <None Include="python\UI.py" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -69,7 +69,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -80,6 +80,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 13.0.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -98,6 +99,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)x64\$(Configuration)\</OutDir>
+    <IncludePath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.0\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -157,5 +159,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 13.0.targets" />
   </ImportGroup>
 </Project>

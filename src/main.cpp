@@ -1,5 +1,4 @@
-//main.cpp — version pour séquentiel + multi-threads
-//test si les push remarchent
+// main.cpp — Benchmark fixe : N_steps = {100, 1000, 10000}, N_paths = {100, 1000, 10000}
 
 #include <iostream>
 #include <fstream>
@@ -8,6 +7,7 @@
 #include <vector>
 #include <iomanip>
 #include <filesystem>
+#include <cmath>
 
 #include "lsmc.hpp"
 #include "gbm.hpp"
@@ -16,97 +16,138 @@
 #include <omp.h>
 #endif
 
+using namespace std;
+
 int main(int argc, char** argv) {
 
-	//si pas assez d'arguments
-    if (argc < 8) {
-        std::cerr << "Usage : lsmc.exe S0 K r sigma T N_steps N_paths\n";
+    if (argc < 6) {
+        cerr << "Usage : lsmc.exe S0 K r sigma T\n";
         return 1;
     }
-	//pour verif le nombre d'arguments
-    std::cout << "argc = " << argc << "\n";
 
-	// conversion des arguments en variables
-    double S0 = std::stod(argv[1]);
-    double K = std::stod(argv[2]);
-    double r = std::stod(argv[3]);
-    double sigma = std::stod(argv[4]);
-    double T = std::stod(argv[5]);
-    int N_steps = std::stoi(argv[6]);
-    int N_paths = 200000;//std::stoi(argv[7]);
-
-	// Affichage des paramètres
-    std::cout << std::fixed << std::setprecision(6);
+    // Paramètres modèle (uniquement)
+    double S0 = stod(argv[1]);
+    double K = stod(argv[2]);
+    double r = stod(argv[3]);
+    double sigma = stod(argv[4]);
+    double T = stod(argv[5]);
 
 #ifdef _OPENMP
-    std::cout << "[INFO] OpenMP actif ("
-        << omp_get_max_threads()
-        << " threads disponibles)\n";
+    cout << "[INFO] OpenMP actif (" << omp_get_max_threads() << " threads dispo)\n";
 #else
-    std::cout << "[INFO] OpenMP non actif — mode sequentiel\n";
+    cout << "[INFO] OpenMP NON actif — mode séquentiel seulement\n";
 #endif
 
-    std::cout << "[INFO] Simulation de "
-        << N_paths << " trajectoires, "
-        << N_steps << " pas temporels\n";
+    cout << fixed << setprecision(6);
 
-	//simulation des trajectoires GBM et export CSV
-    auto paths = GBM::simulatePaths(S0, r, sigma, T, N_steps, N_paths);
-    GBM::exportCSV(paths, "trajectoires_gbm.csv");
-    std::string csv_file = "resultats_lsmc.csv";
-    bool file_exists = std::filesystem::exists(csv_file);
-    std::ofstream f(csv_file, std::ios::app);
-	// écriture de l'en-tête si le fichier n'existe pas
-    if (!file_exists) {
-        f << "Threads,S0,K,r,sigma,T,N_steps,N_paths,Prix,Temps\n";
-    }
+    // --------------------------------------------------
+    // 1) Listes FIXES demandées
+    // --------------------------------------------------
+    vector<int> steps_list = { 100, 1000, 10000 };
+    vector<int> paths_list = { 100, 1000, 10000 };
 
-	// execution séquentielle pour référence
-    {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        double price = LSMC::priceAmericanPut(S0, K, r, sigma, T, N_steps, N_paths);
-        auto t2 = std::chrono::high_resolution_clock::now();
+    // --------------------------------------------------
+    // 2) Threads testés
+    // --------------------------------------------------
+    vector<int> thread_list = { 1 };
 
-        double dt = std::chrono::duration<double>(t2 - t1).count();
-
-        f << 1 << "," << S0 << "," << K << "," << r << "," << sigma << ","
-            << T << "," << N_steps << "," << N_paths << ","
-            << price << "," << dt << "\n";
-
-        std::cout << "[SEQ] Temps = " << dt
-            << " | Prix = " << price << "\n";
-    }
-
-
-	// tests multi-threads avec OpenMP
 #ifdef _OPENMP
-    std::vector<int> thread_list = { 2, 4, 8, 16 };
-
-    for (int th : thread_list) {
-        omp_set_num_threads(th);
-
-        //start
-        auto t1 = std::chrono::high_resolution_clock::now();
-        //calcul
-        double price = LSMC::priceAmericanPut(S0, K, r, sigma, T, N_steps, N_paths);
-        //fin
-        auto t2 = std::chrono::high_resolution_clock::now();
-		//calcul du temps de calcul
-        double dt = std::chrono::duration<double>(t2 - t1).count();
-
-        f << th << "," << S0 << "," << K << "," << r << "," << sigma << ","
-            << T << "," << N_steps << "," << N_paths << ","
-            << price << "," << dt << "\n";
-
-        std::cout << "[OMP] Threads = " << std::setw(2) << th
-            << " | Temps = " << dt  
-            << " | Prix = " << price << "\n";
-    }
+    if (omp_get_max_threads() >= 2)  thread_list.push_back(2);
+    if (omp_get_max_threads() >= 4)  thread_list.push_back(4);
+    if (omp_get_max_threads() >= 8)  thread_list.push_back(8);
+    if (omp_get_max_threads() >= 16) thread_list.push_back(16);
 #endif
+
+    // --------------------------------------------------
+    // 3) Ouverture CSV
+    // --------------------------------------------------
+    const string csv_file = "resultats_lsmc.csv";
+    bool exists = filesystem::exists(csv_file);
+
+    ofstream f(csv_file, ios::app);
+
+    if (!exists) {
+        f << "Threads,S0,K,r,sigma,T,N_steps,N_paths,Prix,Temps,Speedup,RelError,Score\n";
+    }
+
+    // --------------------------------------------------
+    // 4) Benchmark complet
+    // --------------------------------------------------
+    for (int N_steps : steps_list) {
+        for (int N_paths : paths_list) {
+
+            cout << "\n===============================================\n";
+            cout << "[CONFIG TEST] N_steps = " << N_steps
+                << ", N_paths = " << N_paths << "\n";
+
+            // =========================
+            // a) Séquentiel (référence)
+            // =========================
+            double price_seq = 0.0;
+            double time_seq = 0.0;
+
+            {
+                auto t1 = chrono::high_resolution_clock::now();
+                price_seq = LSMC::priceAmericanPut(S0, K, r, sigma, T,
+                    N_steps, N_paths);
+                auto t2 = chrono::high_resolution_clock::now();
+                time_seq = chrono::duration<double>(t2 - t1).count();
+            }
+
+            f << 1 << "," << S0 << "," << K << "," << r << "," << sigma << ","
+                << T << "," << N_steps << "," << N_paths << ","
+                << price_seq << "," << time_seq << ","
+                << 1.0 << "," << 0.0 << "," << 1.0 << "\n";
+
+            cout << "[SEQ] Temps = " << time_seq
+                << " | Prix = " << price_seq << "\n";
+
+#ifdef _OPENMP
+            // =========================
+            // b) Parallélisme OpenMP
+            // =========================
+            for (int th : thread_list) {
+
+                if (th == 1) continue;
+
+                omp_set_num_threads(th);
+
+                auto t1 = chrono::high_resolution_clock::now();
+                double price = LSMC::priceAmericanPut(S0, K, r, sigma, T,
+                    N_steps, N_paths);
+                auto t2 = chrono::high_resolution_clock::now();
+                double dt = chrono::duration<double>(t2 - t1).count();
+
+                double speedup = time_seq / dt;
+
+                double denom = fabs(price_seq);// max(1e-12, fabs(price_seq));
+                double err_abs = std::abs(price - price_seq);
+                double err_rel = err_abs / std::max(std::abs(price_seq), 1e-12);
+
+
+            
+                double score = speedup / (1.0 + 10* err_rel);
+
+                cout << "[OMP] " << th << " threads"
+                    << " | Temps = " << dt
+                    << " | Speedup = " << speedup
+                    << " | Prix = " << price
+                    << setprecision(6)
+                    << "Err_abs = " << err_abs
+                    << " | Err_rel = " << err_rel << "\n"
+                    << " | Score = " << score
+                    << "\n";
+
+                f << th << "," << S0 << "," << K << "," << r << "," << sigma << ","
+                    << T << "," << N_steps << "," << N_paths << ","
+                    << price << "," << dt << ","
+                    << speedup << "," << err_rel << "," << score << "\n";
+            }
+#endif
+        }
+    }
 
     f.close();
-
-    std::cout << "\n[INFO] Resultats ecrits dans resultats_lsmc.csv\n";
+    cout << "\n[INFO] Resultats écrits dans resultats_lsmc.csv\n";
     return 0;
 }
-//test commit
