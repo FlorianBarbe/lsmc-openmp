@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="gbm.cu" />
+    <CudaCompile Include="lsmc.cu" />
     <CudaCompile Include="main.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </CudaCompile>
@@ -149,6 +150,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>curand.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_89,sm_89</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

@@ -1,13 +1,4 @@
 ﻿#include "gbm.hpp"
-#include <cmath>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <filesystem>
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 using namespace std;
 
