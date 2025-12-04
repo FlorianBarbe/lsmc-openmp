@@ -132,8 +132,6 @@ int main(int argc, char** argv) {
                     << " | Temps = " << dt
                     << " | Speedup = " << speedup
                     << " | Prix = " << price
-                    << setprecision(6)
-                    << "Err_abs = " << err_abs
                     << " | Err_rel = " << err_rel << "\n"
                     << " | Score = " << score
                     << "\n";

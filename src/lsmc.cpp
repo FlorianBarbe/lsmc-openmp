@@ -3,10 +3,10 @@
  */
 
 #include "lsmc.hpp"
-#include <cmath>
-#include <algorithm>
-#include <omp.h>
+
 using namespace std;
+
+
 
 static inline void solve3x3(double m[3][3], double b[3], double x[3])
 {
@@ -175,3 +175,170 @@ double LSMC::priceAmericanPut(double S0, double K, double r, double sigma,
 
     return mean / N_paths;
 }
+
+
+//==== version CUDA pour GPU ====
+
+// Petit helper CUDA pour ce fichier (nom différent de CUDA_CHECK pour éviter les collisions)
+static inline void cudaSafe(cudaError_t err, const char* file, int line)
+{
+    if (err != cudaSuccess) {
+        fprintf(stderr, "CUDA error %d (%s) at %s:%d\n",
+            (int)err, cudaGetErrorString(err), file, line);
+        abort();
+    }
+}
+#define CUDA_SAFE(x) cudaSafe((x), __FILE__, __LINE__)
+
+
+double LSMC::priceAmericanPutGPU(double S0, double K, double r, double sigma,
+    double T, int N_steps, int N_paths)
+{
+    const double dt = T / N_steps;
+    const double discount = std::exp(-r * dt);
+
+    // ============================
+    // 1. Simulation des paths sur GPU (float)
+    // ============================
+    GbmParams params;
+    params.S0 = static_cast<float>(S0);
+    params.r = static_cast<float>(r);
+    params.sigma = static_cast<float>(sigma);
+    params.T = static_cast<float>(T);
+    params.nSteps = N_steps;
+    params.nPaths = N_paths;
+
+    const int    nSteps = N_steps;
+    const int    nPaths = N_paths;
+    const size_t total = static_cast<size_t>(nPaths) * (nSteps + 1);
+
+    float* d_paths = nullptr;
+    CUDA_SAFE(cudaMalloc(&d_paths, total * sizeof(float)));
+
+    // Simu sur GPU (Philox par défaut)
+    simulate_gbm_paths_cuda(params, RNGType::PseudoPhilox, d_paths);
+
+    // ============================
+    // 2. Récupérer les paths sur CPU en double
+    // ============================
+    std::vector<float>  paths_f(total);
+    std::vector<double> paths(total);
+
+    CUDA_SAFE(cudaMemcpy(paths_f.data(), d_paths,
+        total * sizeof(float),
+        cudaMemcpyDeviceToHost));
+    CUDA_SAFE(cudaFree(d_paths));
+
+    // cast float -> double
+#pragma omp parallel for schedule(static)
+    for (ptrdiff_t i = 0; i < (ptrdiff_t)total; ++i)
+        paths[i] = static_cast<double>(paths_f[i]);
+
+    // ============================
+    // 3. Calcul des payoffs comme avant (CPU + OpenMP)
+    // ============================
+    std::vector<double> payoff(total);
+
+#pragma omp parallel for schedule(static)
+    for (int i = 0; i < nPaths; ++i) {
+        for (int t = 0; t <= nSteps; ++t) {
+            const double S = paths[idx(i, t, nSteps)];
+            payoff[idx(i, t, nSteps)] = std::max(K - S, 0.0);
+        }
+    }
+
+    // cashflows à maturité
+    std::vector<double> cashflows(nPaths);
+#pragma omp parallel for schedule(static)
+    for (int i = 0; i < nPaths; ++i)
+        cashflows[i] = payoff[idx(i, nSteps, nSteps)];
+
+    // ============================
+    // 4. Backward induction identique à ta version CPU
+    // ============================
+    for (int t = nSteps - 1; t > 0; --t)
+    {
+        double a00 = 0, a01 = 0, a02 = 0;
+        double a11 = 0, a12 = 0, a22 = 0;
+        double b0 = 0, b1 = 0, b2 = 0;
+
+#pragma omp parallel for reduction(+:a00,a01,a02,a11,a12,a22,b0,b1,b2) schedule(static)
+        for (int i = 0; i < nPaths; i++)
+        {
+            const double imm = payoff[idx(i, t, nSteps)];
+            if (imm > 0.0)
+            {
+                const double S = paths[idx(i, t, nSteps)];
+                const double Y = cashflows[i] * discount;
+
+                const double phi0 = 1.0;
+                const double phi1 = S;
+                const double phi2 = S * S;
+
+                a00 += phi0 * phi0;
+                a01 += phi0 * phi1;
+                a02 += phi0 * phi2;
+                a11 += phi1 * phi1;
+                a12 += phi1 * phi2;
+                a22 += phi2 * phi2;
+
+                b0 += phi0 * Y;
+                b1 += phi1 * Y;
+                b2 += phi2 * Y;
+            }
+        }
+
+        // aucun path ITM à cette date : on décote simplement
+        if (a00 == 0.0) {
+#pragma omp parallel for schedule(static)
+            for (int i = 0; i < nPaths; ++i)
+                cashflows[i] *= discount;
+            continue;
+        }
+
+        double M[3][3] = {
+            { a00, a01, a02 },
+            { a01, a11, a12 },
+            { a02, a12, a22 }
+        };
+
+        double B[3] = { b0, b1, b2 };
+        double beta[3];
+
+        solve3x3(M, B, beta);
+
+        const double beta0 = beta[0];
+        const double beta1 = beta[1];
+        const double beta2 = beta[2];
+
+#pragma omp parallel for schedule(static)
+        for (int i = 0; i < nPaths; ++i)
+        {
+            const double immediate = payoff[idx(i, t, nSteps)];
+            if (immediate > 0.0)
+            {
+                const double S = paths[idx(i, t, nSteps)];
+                const double continuation =
+                    beta0 + beta1 * S + beta2 * S * S;
+                if (immediate > continuation)
+                    cashflows[i] = immediate;
+                else
+                    cashflows[i] *= discount;
+            }
+            else {
+                cashflows[i] *= discount;
+            }
+        }
+    }
+
+    // ============================
+    // 5. Moyenne finale
+    // ============================
+    double mean = 0.0;
+#pragma omp parallel for reduction(+:mean)
+    for (int i = 0; i < nPaths; ++i)
+        mean += cashflows[i];
+
+    return mean / nPaths;
+}
+

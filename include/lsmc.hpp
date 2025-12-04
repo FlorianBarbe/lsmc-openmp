@@ -9,9 +9,15 @@
 #include "gbm.hpp"
 #include "regression.hpp"
 #include "rng.hpp"
+#include <cmath>
+#include <algorithm>
+#include <omp.h>
 
 class LSMC {
 public:
     static double priceAmericanPut(double S0, double K, double r, double sigma,
         double T, int N_steps, int N_paths);
+    double priceAmericanPutGPU(double S0, double K, double r, double sigma,
+        double T, int N_steps, int N_paths);
 };
+

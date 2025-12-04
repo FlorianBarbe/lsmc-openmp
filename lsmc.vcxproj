@@ -21,12 +21,15 @@
   <ItemGroup>
     <ClCompile Include="src\gbm.cpp" />
     <ClCompile Include="src\lsmc.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\regression.cpp" />
     <ClCompile Include="src\rng.cpp" />
     <ClCompile Include="src\test_gbm.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="test_cuda.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\gbm.hpp" />
@@ -35,8 +38,12 @@
     <ClInclude Include="include\rng.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="lsmc_cuda.cu">
-      <FileType>Document</FileType>
+    <CudaCompile Include="gbm.cu" />
+    <CudaCompile Include="main.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="test.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </CudaCompile>
     <None Include="python\pages\1_Simulation.py" />
     <None Include="python\pages\2_Trajectoires_GBM.py" />
@@ -140,6 +147,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>curand.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
