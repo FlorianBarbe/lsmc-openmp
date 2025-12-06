@@ -2,14 +2,13 @@
 #include "lsmc.hpp"
 
 
-#ifndef LSMC_ENABLE_CUDA
-#error "test_cuda.cpp requires CUDA; compile with nvcc to enable GPU tests."
-#endif
+
 #include <iostream>
 #include <vector>
 
 int main()
 {
+#ifdef LSMC_ENABLE_CUDA
     GbmParams p;
     p.S0 = 100;
     p.K = 100.0;
@@ -35,9 +34,12 @@ int main()
     LSMC engine;
     double price_gpu = engine.priceAmericanPutGPU(p.S0, p.K, p.r, p.sigma, p.T,p.nSteps, p.nPaths);
 
-        std::cout << "American put (GPU paths) = " << price_gpu << std::endl;
-
+        std::cout << "American put (GPU paths) = " << price_gpu << std::endl1
     std::cout << "GPU OK, paths:\n";
     for (int i = 0; i < total; i++) std::cout << h[i] << " ";
+    #else
+    std::cout << "CUDA support is not enabled; build with nvcc to run GPU tests." << std::endl; 
+#endif
     return 0;
 }
+
