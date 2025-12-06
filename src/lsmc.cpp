@@ -202,6 +202,7 @@ double LSMC::priceAmericanPutGPU(double S0, double K, double r, double sigma,
     // Params GBM en float
     GbmParams params;
     params.S0 = static_cast<float>(S0);
+    params.K = static_cast<float>(K);
     params.r = static_cast<float>(r);
     params.sigma = static_cast<float>(sigma);
     params.T = static_cast<float>(T);

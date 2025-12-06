@@ -7,6 +7,10 @@
 
 #include "gbm.hpp"
 
+#ifndef __CUDACC__
+#error "gbm.cu must be compiled with NVCC (CUDA compiler)."
+#endif
+
 
 // =====================================================================================
 // Helpers CUDA

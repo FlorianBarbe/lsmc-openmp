@@ -1,5 +1,10 @@
 #include "gbm.hpp"
 #include "lsmc.hpp"
+
+
+#ifndef LSMC_ENABLE_CUDA
+#error "test_cuda.cpp requires CUDA; compile with nvcc to enable GPU tests."
+#endif
 #include <iostream>
 #include <vector>
 
