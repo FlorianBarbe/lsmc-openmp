@@ -1,5 +1,11 @@
 #pragma once
 
+#ifndef LSMC_ENABLE_CUDA
+#ifdef __CUDACC__
+#define LSMC_ENABLE_CUDA 1
+#endif
+#endif
+
 #ifdef LSMC_ENABLE_CUDA
 #include <cuda_runtime.h>
 #endif

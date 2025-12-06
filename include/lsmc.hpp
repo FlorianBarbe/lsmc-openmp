@@ -5,6 +5,14 @@
  */
 
 #pragma once
+
+#pragma once
+#ifndef LSMC_ENABLE_CUDA
+#ifdef __CUDACC__
+#define LSMC_ENABLE_CUDA 1
+#endif
+#endif
+
 #include <vector>
 #include "gbm.hpp"
 #include "regression.hpp"

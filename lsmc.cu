@@ -1,3 +1,5 @@
+#include <cstdio>
+#include <cmath>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
 #include <device_functions.h>
@@ -196,3 +198,4 @@ void updateCashflowsGPU(const float* d_paths,
     CUDA_CHECK(cudaPeekAtLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 }
+
