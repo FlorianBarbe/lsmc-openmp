@@ -48,14 +48,6 @@
     <CudaCompile Include="lsmc.cu">
       <CodeGeneration>compute_89,sm_89</CodeGeneration>
     </CudaCompile>
-    <CudaCompile Include="main.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <CodeGeneration>compute_89,sm_89</CodeGeneration>
-    </CudaCompile>
-    <CudaCompile Include="test.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <CodeGeneration>compute_89,sm_89</CodeGeneration>
-    </CudaCompile>
     <None Include="python\pages\1_Simulation.py" />
     <None Include="python\pages\2_Trajectoires_GBM.py" />
     <None Include="python\pages\3_Performance_OpenMP.py" />

@@ -78,12 +78,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="main.cu">
-      <Filter>cuda</Filter>
-    </CudaCompile>
-    <CudaCompile Include="test.cu">
-      <Filter>cuda</Filter>
-    </CudaCompile>
     <CudaCompile Include="gbm.cu">
       <Filter>cuda</Filter>
     </CudaCompile>
