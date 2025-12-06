@@ -1,6 +1,8 @@
 #pragma once
 
+#ifdef LSMC_ENABLE_CUDA
 #include <cuda_runtime.h>
+#endif
 
 // =========================================================
 // PARAMÈTRES GBM POUR CUDA — doivent matcher gbm.cu EXACTEMENT
@@ -23,12 +25,13 @@ enum class RNGType {
 // =========================================================
 // Déclaration du simulateur GPU
 // =========================================================
-
+#ifdef LSMC_ENABLE_CUDA
 void simulate_gbm_paths_cuda(const GbmParams& params,
     RNGType rng,
     float* d_paths,
     unsigned long long seed = 1234ULL,
     cudaStream_t stream = 0);
+#endif
 
 
 // =========================================================
@@ -51,7 +54,7 @@ public:
     GBM(double S0, double r, double sigma, double T, int N_steps);
 
     void simulate_path(RNG& rng, double* path_out);
-
+    std::vector<double> simulate(RNG& rng);
     static void simulatePaths(double* paths, double S0, double r, double sigma,
         double T, int N_steps, int N_paths);
 

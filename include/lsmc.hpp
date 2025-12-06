@@ -11,24 +11,32 @@
 #include "rng.hpp"
 #include <cmath>
 #include <algorithm>
+
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
+#ifdef LSMC_ENABLE_CUDA
 #include <cuda_runtime.h>
-
+#endif
 
 class LSMC {
 public:
     static double priceAmericanPut(double S0, double K, double r, double sigma,
-        double T, int N_steps, int N_paths);
+    double T, int N_steps, int N_paths);
+    #ifdef LSMC_ENABLE_CUDA
     double priceAmericanPutGPU(double S0, double K, double r, double sigma,
         double T, int N_steps, int N_paths);
+    #endif
 };
 // API host : déclaration unique (pas de redéfinition dans le .cu)
+#ifdef LSMC_ENABLE_CUDA
 void simulate_gbm_paths_cuda(const GbmParams& params,
     RNGType rng,
     float* d_paths,
     unsigned long long seed ,
     cudaStream_t stream );
+#endif
 
 // Structure pour accumuler les sommes nécessaires à la régression sur GPU
 struct RegressionSumsGPU {
@@ -38,6 +46,7 @@ struct RegressionSumsGPU {
 };
 
 // Fonction pour calculer les sommes de régression sur GPU
+#ifdef LSMC_ENABLE_CUDA
 void computeRegressionSumsGPU(const float* d_paths,
     const float* d_payoff,
     const float* d_cashflows,
@@ -61,3 +70,4 @@ void updateCashflowsGPU(const float* d_paths,
     int t,
     int N_steps,
     int N_paths);
+#endif

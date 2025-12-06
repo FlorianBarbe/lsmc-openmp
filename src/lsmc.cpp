@@ -3,6 +3,8 @@
  */
 
 #include "lsmc.hpp"
+#include <cstdio>
+#include <cstdlib>
 
 using namespace std;
 
@@ -178,7 +180,7 @@ double LSMC::priceAmericanPut(double S0, double K, double r, double sigma,
 
 
 //==== version CUDA pour GPU ====
-
+#ifdef LSMC_ENABLE_CUDA
 // Petit helper CUDA pour ce fichier (nom différent de CUDA_CHECK pour éviter les collisions)
 static inline void cudaSafe(cudaError_t err, const char* file, int line)
 {
@@ -302,3 +304,5 @@ double LSMC::priceAmericanPutGPU(double S0, double K, double r, double sigma,
 
     return mean / nPaths;
 }
+
+#endif

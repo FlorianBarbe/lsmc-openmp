@@ -1,17 +1,27 @@
-﻿#include "gbm.hpp"
-#include <filesystem>
-#include<basic_ofstream>
+﻿#include <iostream>
+#include <fstream>
 #include <iomanip>
-#include <iostream>
+#include <filesystem>
+#include <cmath>
 
-
+#include "gbm.hpp"
 
 using namespace std;
 
 
+using namespace std;
+
 GBM::GBM(double S0, double r, double sigma, double T, int N_steps)
     : S0(S0), r(r), sigma(sigma), T(T), N_steps(N_steps) {
 }
+
+// Simulation complète et retour d'un vecteur pour les tests
+std::vector<double> GBM::simulate(RNG& rng) {
+    std::vector<double> path(static_cast<size_t>(N_steps) + 1);
+    simulate_path(rng, path.data());
+    return path;
+}
+
 
 // Simulation d'une trajectoire
 void GBM::simulate_path(RNG& rng, double* path_out) {
@@ -24,7 +34,7 @@ void GBM::simulate_path(RNG& rng, double* path_out) {
     {
         double Z = rng.normal();
 		S = S * exp((r - 0.5 * sigma * sigma) * dt + sigma * sqrt(dt) * Z);
-        path_out[t]=S;
+        path_out[t] = S;
     }
 }
 
