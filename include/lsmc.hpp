@@ -27,8 +27,8 @@ public:
 void simulate_gbm_paths_cuda(const GbmParams& params,
     RNGType rng,
     float* d_paths,
-    unsigned long long seed = 1234ULL,
-    cudaStream_t stream = 0);
+    unsigned long long seed ,
+    cudaStream_t stream );
 
 // Structure pour accumuler les sommes nécessaires à la régression sur GPU
 struct RegressionSumsGPU {

@@ -1,10 +1,11 @@
 // gbm_cuda.cu
-#include "gbm.hpp"
 #include <cstdio>
 #include <cmath>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
 #include <curand.h>
+
+#include "gbm.hpp"
 
 
 // =====================================================================================

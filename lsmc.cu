@@ -2,9 +2,6 @@
 #include <curand_kernel.h>
 #include <device_functions.h>
 
-
-
-
 #include "lsmc.hpp"
 
 // ======================================================

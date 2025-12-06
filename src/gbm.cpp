@@ -1,4 +1,10 @@
 ﻿#include "gbm.hpp"
+#include <filesystem>
+#include<basic_ofstream>
+#include <iomanip>
+#include <iostream>
+
+
 
 using namespace std;
 
@@ -35,6 +41,7 @@ void GBM::simulatePaths(double* paths, double S0, double r, double sigma, double
 }
 
 // Export de trajectoires_gbm.csv
+
 void GBM::exportCSV(
     const std::vector<std::vector<double>>& paths,
     const std::string& filename)
@@ -84,5 +91,3 @@ void GBM::exportCSV(
         std::filesystem::rename(tmpname, filename);
     }
 }
-
-
