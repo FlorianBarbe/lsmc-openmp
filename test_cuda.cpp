@@ -8,6 +8,9 @@
 
 int main()
 {
+    int i;
+    i = 0;
+    std::cout << i << std::endl;
 #ifdef LSMC_ENABLE_CUDA
     GbmParams p;
     p.S0 = 100;

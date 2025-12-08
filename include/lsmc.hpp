@@ -4,13 +4,11 @@
  * Rôle : encapsule la logique du pricing d’une option américaine via Monte Carlo + régression.
  */
 
-#pragma once
 
 #pragma once
-#ifndef LSMC_ENABLE_CUDA
-#ifdef __CUDACC__
-#define LSMC_ENABLE_CUDA 1
-#endif
+
+#ifdef LSMC_ENABLE_CUDA
+#include <cuda_runtime.h>
 #endif
 
 #include <vector>
@@ -24,9 +22,7 @@
 #include <omp.h>
 #endif
 
-#ifdef LSMC_ENABLE_CUDA
-#include <cuda_runtime.h>
-#endif
+
 
 class LSMC {
 public:

@@ -108,6 +108,7 @@
       <OpenMPSupport>true</OpenMPSupport>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions); LSMC_ENABLE_CUDA</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -108,7 +108,7 @@ void simulate_gbm_paths_cuda(const GbmParams& params,
     dim3 grid((nPaths + block.x - 1) / block.x);
 
     if (rng == RNGType::PseudoPhilox) {
-        gbm_paths_philox_kernel << <grid, block, 0, stream >> > (params, seed, d_paths);
+        gbm_paths_philox_kernel <<<grid, block, 0, stream >>> (params, seed, d_paths);
         CUDA_CHECK(cudaPeekAtLastError());
         CUDA_CHECK(cudaStreamSynchronize(stream));
     }

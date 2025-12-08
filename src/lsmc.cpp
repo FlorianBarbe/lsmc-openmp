@@ -227,7 +227,7 @@ double LSMC::priceAmericanPutGPU(double S0, double K, double r, double sigma,
     // 1) payoff
     {
         int blockSize = 256;
-        int gridSize = (int)((total + blockSize - 1) / blockSize);
+        unsigned int gridSize = (int)((total + blockSize - 1) / blockSize);
         payoff_kernel << <gridSize, blockSize >> > (
             d_paths, d_payoff,
             static_cast<float>(K),
