@@ -19,9 +19,6 @@
     <Filter Include="Python\pages">
       <UniqueIdentifier>{83c4af58-41b5-4a13-9ea0-bd0a7be77c10}</UniqueIdentifier>
     </Filter>
-    <Filter Include="cuda">
-      <UniqueIdentifier>{8f26c3e2-7724-4e77-bf65-a84e7b303bca}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -73,13 +70,5 @@
     <None Include="python\UI.py">
       <Filter>Python</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="gbm.cu">
-      <Filter>cuda</Filter>
-    </CudaCompile>
-    <CudaCompile Include="lsmc.cu">
-      <Filter>cuda</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>
