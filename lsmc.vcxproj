@@ -32,7 +32,6 @@
     <ClCompile Include="src\lsmc.cpp" />
     <ClCompile Include="src\regression.cpp" />
     <ClCompile Include="src\rng.cpp" />
-    <ClCompile Include="test_cuda.cpp" />
     <ClCompile Include="src\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
