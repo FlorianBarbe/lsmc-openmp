@@ -1,4 +1,4 @@
-// main.cpp — Benchmark fixe : N_steps = {100, 1000, 10000}, N_paths = {100, 1000, 10000}
+ï»¿// main.cpp â€” Benchmark automatique LSMC (sans arguments)
 
 #include <iostream>
 #include <fstream>
@@ -18,37 +18,39 @@
 
 using namespace std;
 
-int main(int argc, char** argv) {
+int main() {
 
-    if (argc < 6) {
-        cerr << "Usage : lsmc.exe S0 K r sigma T\n";
-        return 1;
-    }
-
-    // Paramètres modèle (uniquement)
-    double S0 = stod(argv[1]);
-    double K = stod(argv[2]);
-    double r = stod(argv[3]);
-    double sigma = stod(argv[4]);
-    double T = stod(argv[5]);
+    // ==================================================
+    // 1) ParamÃ¨tres modÃ¨le FIXES
+    // ==================================================
+    const double S0 = 100.0;
+    const double K = 100.0;
+    const double r = 0.05;
+    const double sigma = 0.20;
+    const double T = 1.0;
 
 #ifdef _OPENMP
-    cout << "[INFO] OpenMP actif (" << omp_get_max_threads() << " threads dispo)\n";
+    cout << "[INFO] OpenMP actif (" << omp_get_max_threads() << " threads max)\n";
 #else
-    cout << "[INFO] OpenMP NON actif — mode séquentiel seulement\n";
+    cout << "[INFO] OpenMP NON actif (sÃ©quentiel)\n";
 #endif
 
     cout << fixed << setprecision(6);
 
-    // --------------------------------------------------
-    // 1) Listes FIXES demandées
-    // --------------------------------------------------
-    vector<int> steps_list = { 100, 1000, 10000 };
-    vector<int> paths_list = { 100, 1000, 10000 };
+    // ==================================================
+    // 2) Listes ARBITRAIRES de benchmark
+    // ==================================================
+    vector<int> steps_list = {
+        50, 100, 500, 1000, 5000, 10000
+    };
 
-    // --------------------------------------------------
-    // 2) Threads testés
-    // --------------------------------------------------
+    vector<int> paths_list = {
+        100, 500, 1000, 2000, 5000, 10000
+    };
+
+    // ==================================================
+    // 3) Threads testÃ©s
+    // ==================================================
     vector<int> thread_list = { 1 };
 
 #ifdef _OPENMP
@@ -58,9 +60,9 @@ int main(int argc, char** argv) {
     if (omp_get_max_threads() >= 16) thread_list.push_back(16);
 #endif
 
-    // --------------------------------------------------
-    // 3) Ouverture CSV
-    // --------------------------------------------------
+    // ==================================================
+    // 4) CSV
+    // ==================================================
     const string csv_file = "resultats_lsmc.csv";
     bool exists = filesystem::exists(csv_file);
 
@@ -70,42 +72,43 @@ int main(int argc, char** argv) {
         f << "Threads,S0,K,r,sigma,T,N_steps,N_paths,Prix,Temps,Speedup,RelError,Score\n";
     }
 
-    // --------------------------------------------------
-    // 4) Benchmark complet
-    // --------------------------------------------------
+    // ==================================================
+    // 5) Benchmark complet
+    // ==================================================
     for (int N_steps : steps_list) {
         for (int N_paths : paths_list) {
 
             cout << "\n===============================================\n";
-            cout << "[CONFIG TEST] N_steps = " << N_steps
+            cout << "[TEST] N_steps = " << N_steps
                 << ", N_paths = " << N_paths << "\n";
 
-            // =========================
-            // a) Séquentiel (référence)
-            // =========================
+            // -------------------------
+            // SÃ©quentiel (rÃ©fÃ©rence)
+            // -------------------------
             double price_seq = 0.0;
             double time_seq = 0.0;
 
             {
                 auto t1 = chrono::high_resolution_clock::now();
-                price_seq = LSMC::priceAmericanPut(S0, K, r, sigma, T,
-                    N_steps, N_paths);
+                price_seq = LSMC::priceAmericanPut(
+                    S0, K, r, sigma, T, N_steps, N_paths
+                );
                 auto t2 = chrono::high_resolution_clock::now();
                 time_seq = chrono::duration<double>(t2 - t1).count();
             }
+
+            cout << "[SEQ] Temps = " << time_seq
+                << " | Prix = " << price_seq << "\n";
 
             f << 1 << "," << S0 << "," << K << "," << r << "," << sigma << ","
                 << T << "," << N_steps << "," << N_paths << ","
                 << price_seq << "," << time_seq << ","
                 << 1.0 << "," << 0.0 << "," << 1.0 << "\n";
 
-            cout << "[SEQ] Temps = " << time_seq
-                << " | Prix = " << price_seq << "\n";
-
 #ifdef _OPENMP
-            // =========================
-            // b) Parallélisme OpenMP
-            // =========================
+            // -------------------------
+            // OpenMP
+            // -------------------------
             for (int th : thread_list) {
 
                 if (th == 1) continue;
@@ -113,28 +116,24 @@ int main(int argc, char** argv) {
                 omp_set_num_threads(th);
 
                 auto t1 = chrono::high_resolution_clock::now();
-                double price = LSMC::priceAmericanPut(S0, K, r, sigma, T,
-                    N_steps, N_paths);
+                double price = LSMC::priceAmericanPut(
+                    S0, K, r, sigma, T, N_steps, N_paths
+                );
                 auto t2 = chrono::high_resolution_clock::now();
                 double dt = chrono::duration<double>(t2 - t1).count();
 
                 double speedup = time_seq / dt;
+                double err_rel = abs(price - price_seq)
+                    / max(abs(price_seq), 1e-12);
 
-                double denom = fabs(price_seq);// max(1e-12, fabs(price_seq));
-                double err_abs = std::abs(price - price_seq);
-                double err_rel = err_abs / std::max(std::abs(price_seq), 1e-12);
-
-
-            
-                double score = speedup / (1.0 + 10* err_rel);
+                double score = speedup / (1.0 + 10.0 * err_rel);
 
                 cout << "[OMP] " << th << " threads"
                     << " | Temps = " << dt
                     << " | Speedup = " << speedup
                     << " | Prix = " << price
-                    << " | Err_rel = " << err_rel << "\n"
-                    << " | Score = " << score
-                    << "\n";
+                    << " | Err_rel = " << err_rel
+                    << " | Score = " << score << "\n";
 
                 f << th << "," << S0 << "," << K << "," << r << "," << sigma << ","
                     << T << "," << N_steps << "," << N_paths << ","
@@ -146,6 +145,6 @@ int main(int argc, char** argv) {
     }
 
     f.close();
-    cout << "\n[INFO] Resultats écrits dans resultats_lsmc.csv\n";
+    cout << "\n[INFO] Benchmark terminÃ© â†’ resultats_lsmc.csv\n";
     return 0;
 }
