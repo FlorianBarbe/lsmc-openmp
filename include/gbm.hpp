@@ -1,45 +1,5 @@
 #pragma once
 
-#ifndef LSMC_ENABLE_CUDA
-#ifdef __CUDACC__
-#define LSMC_ENABLE_CUDA 1
-#endif
-#endif
-
-#ifdef LSMC_ENABLE_CUDA
-#include <cuda_runtime.h>
-#endif
-
-// =========================================================
-// PARAMÈTRES GBM POUR CUDA — doivent matcher gbm.cu EXACTEMENT
-// =========================================================
-struct GbmParams {
-    float S0;
-    float K;
-    float r;
-    float sigma;
-    float T;
-    int   nSteps;
-    int   nPaths;
-};
-
-// Types de RNG disponibles pour CUDA
-enum class RNGType {
-    PseudoPhilox,
-    SobolScrambled
-};
-
-// =========================================================
-// Déclaration du simulateur GPU
-// =========================================================
-#ifdef LSMC_ENABLE_CUDA
-void simulate_gbm_paths_cuda(const GbmParams& params,
-    RNGType rng,
-    float* d_paths,
-    unsigned long long seed = 1234ULL,
-    cudaStream_t stream = 0);
-#endif
-
 
 // =========================================================
 // PARTIE CPU (classe GBM)

@@ -36,9 +36,6 @@
     <ClCompile Include="src\rng.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\test_gbm.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\gbm.hpp">
