@@ -96,3 +96,83 @@ Nous présentons ici la démarche complète que nous avons suivie pour étudier 
 """)
 
 st.info("Utilisez la barre latérale pour accéder aux différentes sections de l'application.")
+
+
+import pandas as pd
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+
+def guess_columns(df):
+    x_col = df.columns[0]
+    y_cols = [c for c in df.columns[1:] if pd.api.types.is_numeric_dtype(df[c])]
+    if not y_cols:
+        raise ValueError("Aucune colonne numérique trouvée.")
+    return x_col, y_cols
+
+
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Affichage graphique CSV")
+        self.geometry("900x600")
+
+        self.df = None
+        self.x_col = None
+        self.y_cols = None
+
+        tk.Button(self, text="Charger CSV", command=self.load_csv).pack(pady=10)
+        self.info = tk.Label(self, text="Aucun fichier chargé")
+        self.info.pack()
+
+        self.frame = tk.Frame(self)
+        self.frame.pack(fill="both", expand=True)
+
+        self.canvas = None
+
+    def load_csv(self):
+        path = filedialog.askopenfilename(
+            filetypes=[("CSV", "*.csv"), ("Tous", "*.*")]
+        )
+        if not path:
+            return
+
+        try:
+            df = pd.read_csv(path)
+            x_col, y_cols = guess_columns(df)
+        except Exception as e:
+            messagebox.showerror("Erreur", str(e))
+            return
+
+        self.df = df
+        self.x_col = x_col
+        self.y_cols = y_cols
+
+        self.info.config(text=f"X: {x_col} | Y: {', '.join(y_cols)}")
+        self.show_plot()
+
+    def show_plot(self):
+        for w in self.frame.winfo_children():
+            w.destroy()
+
+        fig = plt.Figure(figsize=(8, 4.5))
+        ax = fig.add_subplot(111)
+
+        for y in self.y_cols:
+            ax.plot(self.df[self.x_col], self.df[y], label=y)
+
+        ax.set_xlabel(self.x_col)
+        ax.set_ylabel("Valeur")
+        ax.legend()
+        ax.grid(True)
+
+        self.canvas = FigureCanvasTkAgg(fig, master=self.frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(fill="both", expand=True)
+
+
+if __name__ == "__main__":
+    App().mainloop()
