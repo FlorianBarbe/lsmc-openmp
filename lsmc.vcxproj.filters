@@ -50,6 +50,9 @@
     <ClInclude Include="include\rng.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="runtime_flags.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\pages\1_Simulation.py">
@@ -66,6 +69,9 @@
     </None>
     <None Include="python\UI.py">
       <Filter>Python</Filter>
+    </None>
+    <None Include="ui.py">
+      <Filter>src</Filter>
     </None>
   </ItemGroup>
 </Project>

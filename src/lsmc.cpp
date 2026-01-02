@@ -1,12 +1,12 @@
-/**
- * Implémentation du module Longstaff–Schwartz (parallélisée avec OpenMP)
+ï»¿/**
+ * ImplÃ©mentation du module Longstaffâ€“Schwartz (parallÃ©lisÃ©e avec OpenMP)
  */
 
 #include "lsmc.hpp"
+#include <fstream>
+#include "../runtime_flags.hpp"
 
 using namespace std;
-
-
 
 static inline void solve3x3(double m[3][3], double b[3], double x[3])
 {
@@ -15,7 +15,7 @@ static inline void solve3x3(double m[3][3], double b[3], double x[3])
         // Pivot principal
         double piv = m[k][k];
 
-        // Si pivot trop petit -> risque d'instabilité -> petite régularisation
+        // Si pivot trop petit -> risque d'instabilitÃ© -> petite rÃ©gularisation
         if (fabs(piv) < 1e-14)
             piv = (piv >= 0.0 ? 1e-14 : -1e-14);
 
@@ -26,7 +26,7 @@ static inline void solve3x3(double m[3][3], double b[3], double x[3])
             m[k][j] *= inv_piv;
         b[k] *= inv_piv;
 
-        // Élimination dans les autres lignes
+        // Ã‰limination dans les autres lignes
         for (int i = 0; i < 3; ++i)
         {
             if (i == k) continue;
@@ -38,12 +38,12 @@ static inline void solve3x3(double m[3][3], double b[3], double x[3])
         }
     }
 
-    // Récupération de x
+    // RÃ©cupÃ©ration de x
     for (int i = 0; i < 3; ++i)
         x[i] = b[i];
 }
 
-//pour accéder aux indices beaucoup plus facilement
+//pour accÃ©der aux indices beaucoup plus facilement
 inline int idx(int i, int t, int N_steps)
 {
     return i * (N_steps + 1) + t;
@@ -61,6 +61,23 @@ double LSMC::priceAmericanPut(double S0, double K, double r, double sigma,
     GBM gbm(S0, r, sigma, T, N_steps);
 
     gbm.simulatePaths(paths.data(), S0, r, sigma, T, N_steps, N_paths);
+    if (g_dump_paths) {
+        ofstream outfile("paths.csv");
+        if (outfile.is_open()) {
+            outfile << "path_id";
+            for (int t = 0; t <= N_steps; ++t) outfile << ",t" << t;
+            outfile << "\n";
+
+            for (int i = 0; i < N_paths; ++i) {
+                outfile << i;
+                for (int t = 0; t <= N_steps; ++t) {
+                    outfile << "," << paths[idx(i, t, N_steps)];
+                }
+                outfile << "\n";
+            }
+        }
+    }
+
 
 
     
@@ -72,9 +89,9 @@ double LSMC::priceAmericanPut(double S0, double K, double r, double sigma,
             payoff[idx(i, t, N_steps)] = max(K - S, 0.0);
         }
 
-    // 3. Backward induction parallélisée
+    // 3. Backward induction parallÃ©lisÃ©e
 
-    //cashflow à maturité=payoff final
+    //cashflow Ã  maturitÃ©=payoff final
     vector<double> cashflows(N_paths);
 #pragma omp parallel for schedule(static)
     for (int i = 0; i < N_paths; ++i)
@@ -92,7 +109,7 @@ double LSMC::priceAmericanPut(double S0, double K, double r, double sigma,
 #pragma omp parallel for reduction(+:a00,a01,a02,a11,a12,a22,b0,b1,b2) schedule(static)
         for (int i = 0; i < N_paths; i++)
         {
-            //ne considérer que les paths "dans la monnaie"
+            //ne considÃ©rer que les paths "dans la monnaie"
             if (payoff[idx(i,t,N_steps)] > 0.0)
             {
                 const double S = paths[idx(i,t,N_steps)];
@@ -119,12 +136,12 @@ double LSMC::priceAmericanPut(double S0, double K, double r, double sigma,
 
         //Si a00=0, aucune trajectoire ITM : on continue simplement
         if (a00 == 0.0)
+        {
 #pragma omp parallel for schedule(static)
             for (int i = 0; i < N_paths; ++i)
                 cashflows[i] *= discount;
-
-        continue;
-        //constuction de la matrice symétrique 3x3
+            continue;
+        }
 
         double M[3][3]{
             {a00,a01,a02},
@@ -135,14 +152,14 @@ double LSMC::priceAmericanPut(double S0, double K, double r, double sigma,
         double B[3] = { b0,b1,b2 };
         double beta[3];
 
-        //résolution rapide du petit système
+        //rÃ©solution rapide du petit systÃ¨me
         solve3x3(M, B, beta);
 
         const double beta0 = beta[0];
         const double beta1 = beta[1];
         const double beta2 = beta[2];
 
-        //MaJ des payoffs parallélisée
+        //MaJ des payoffs parallÃ©lisÃ©e
 
 #pragma omp parallel for schedule(static)
         for (int i=0; i < N_paths; ++i)
