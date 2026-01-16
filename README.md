@@ -1,125 +1,57 @@
-**PROJET LSMC - PRICING D'OPTIONS AMÉRICAINES EN C++ (OpenMP)**
+# Projet LSMC - Pricing d'Options Américaines (OpenMP)
 
-**1. OBJECTIF**  
-Ce projet implémente la méthode de Longstaff–Schwartz (LSMC) pour estimer le prix d’une option américaine par simulation Monte Carlo avec régression OLS.  
-Les trajectoires sont simulées sous un mouvement brownien géométrique (GBM).  
-La simulation est parallélisée avec OpenMP et les résultats sont exportés vers des CSV exploitables en Python/Streamlit.
+Ce projet implémente la méthode de **Longstaff-Schwartz (LSMC)** pour l'évaluation d'options américaines (Put) par simulation de Monte Carlo et régression par moindres carrés.
 
-Modules :
-- Simulation Monte Carlo (GBM)
-- Régression OLS
-- Backward Induction
-- Parallélisation OpenMP
-- Export CSV et visualisation Python
-- Backend GPU expérimental (CUDA)
+Le cœur de calcul est écrit en **C++** (parallélisé avec **OpenMP**), et l'interface utilisateur est en **Python** (Tkinter) pour la configuration et la visualisation graphique.
 
-------------------------------------------------------------
+## Architecture
 
-**2. STRUCTURE DU PROJET**
+Le projet est structuré comme suit :
 
-lsmc-openmp/  
-&nbsp;&nbsp;&nbsp;&nbsp;include/        # Headers : GBM, LSMC, régression OLS, RNG  
-&nbsp;&nbsp;&nbsp;&nbsp;src/            # Implémentations CPU + OpenMP + main.cpp  
-&nbsp;&nbsp;&nbsp;&nbsp;cuda/           # Version GPU CUDA (kernels et expérimentations)  
-&nbsp;&nbsp;&nbsp;&nbsp;python/         # Interface Streamlit et scripts d'analyse  
-&nbsp;&nbsp;&nbsp;&nbsp;docs/           # Documentation, rapports, images  
-&nbsp;&nbsp;&nbsp;&nbsp;.gitignore      # Ignore CSV, binaires, x64/, Debug/, etc.  
-&nbsp;&nbsp;&nbsp;&nbsp;lsmc.sln        # Solution Visual Studio  
-&nbsp;&nbsp;&nbsp;&nbsp;README.md       # Documentation principale  
+- **`src/`** : Code source C++ (`main.cpp`, `lsmc.cpp`, `gbm.cpp`, etc.).
+- **`include/`** : En-têtes (`.hpp`).
+- **`ui.py`** : Interface graphique lanceur (Python).
+- **`lsmc.sln` / `.vcxproj`** : Fichiers solution Visual Studio.
 
-------------------------------------------------------------
+## Prérequis
 
-**3. DESCRIPTION DES MODULES**
+### C++
+- **Visual Studio 2022** (ou équivalent) avec le workload "Desktop development with C++".
+- Support d'OpenMP (activé dans les propriétés du projet : `C/C++ -> Language -> OpenMP Support`).
 
-RNG (rng.hpp / rng.cpp)  
-- Génère des tirages normaux.  
-- Utilisé dans GBM pour simuler les incréments brownien.
+### Python
+- Python 3.x installé.
+- Packages requis : `pandas`, `numpy`, `matplotlib`.
+  ```bash
+  pip install -r requirements.txt
+  ```
 
-GBM (gbm.hpp / gbm.cpp)  
-- Simulation du mouvement brownien géométrique.  
-- Fonctions : simulate(), simulatePaths(), exportCSV().
+## Compilation
 
-Regression (regression.hpp / regression.cpp)  
-- Régression polynomiale OLS.  
-- Approxime la continuation value dans le backward LSMC.
+1. Ouvrez `lsmc.sln` dans Visual Studio.
+2. Sélectionnez la configuration **Release** (ou Debug) et la plateforme **x64**.
+3. Faites un clic droit sur la solution -> **Recompiler** (Rebuild).
+   *L'exécutable sera généré dans `x64/Release/lsmc.exe` ou `x64/Debug/lsmc.exe`.*
 
-LSMC (lsmc.hpp / lsmc.cpp)  
-- Simulation GBM + backward induction + décisions d'exercice.
+## Utilisation
 
-main.cpp  
-- Configure les paramètres, exécute séquentiel/OpenMP, écrit les CSV.
+Le moyen le plus simple est d'utiliser l'interface graphique :
 
-------------------------------------------------------------
+1. Assurez-vous d'avoir compilé le projet.
+2. Lancez le script Python :
+   ```bash
+   python ui.py
+   ```
+3. Dans l'interface :
+   - Indiquez le chemin de l'exécutable (ex: `x64/Debug/lsmc.exe`).
+   - Ajustez les paramètres (S0, K, T, Volatilité, Taux).
+   - Choisissez le nombre de pas (N_steps) et de chemins (N_paths).
+   - Cliquez sur **Lancer**.
 
-**4. HISTORIQUE DE DÉVELOPPEMENT**
+Le programme C++ va générer les trajectoires, calculer le prix, et l'interface affichera les courbes et le résultat.
 
-**22 octobre 2024**  
-- Création du projet  
-- Création du dépôt et structure initiale.  
-- Première version de GBM, LSMC et scripts Python.
+> **Note** : Le bouton "Lancer" nettoie automatiquement les anciens résultats avant chaque simulation pour garantir la fraîcheur des données.
 
-**23 octobre 2024**  
-- Ajustements  
-- Correction du chemin des CSV, nettoyage initial.
+## Auteurs
 
-**6 novembre 2024**  
-- Documentation OLS  
-- Ajout de la théorie LSMC dans le README.  
-- Documentation GBM/LSMC/Regression.
-
-**9 novembre 2024**  
-- Suppression complète  
-- Suppression de l'ancien code et reconstruction prévue.
-
-**10 novembre 2024**  
-- Reconstruction  
-- Recréation propre de src/, include/, nouveau pipeline CSV.
-
-**11 novembre 2024**  
-- Reset Git  
-- Force-push pour remettre le dépôt au propre.
-
-**18–19 novembre 2024**  
-- Refonte Streamlit  
-- Réécriture complète de l’interface UI.  
-- Mise à jour des CSV.
-
-**20 novembre 2024**  
-- Export CSV robuste  
-- Export sécurisé via fichier temporaire + rename atomique.
-
-**24 novembre 2024**  
-- Stabilisation  
-- Corrections diverses et nettoyage.
-
-**24 novembre 2025**  
-- Mise à jour Python et documentation  
-- Organisation des pages Streamlit.  
-- Commentaires GBM enrichis.
-
-**29 novembre 2025**
-- Implémentation CUDA  
-  - Ajout du backend GPU complet dans `cuda/lsmc_cuda.cu`.  
-  - Écriture des kernels :
-      • simulatePathsKernel : simulation GBM entièrement sur GPU  
-      • buildNormalEquationsKernel : construction de AᵀA et Aᵀy via atomicAdd  
-      • updateCashflowsKernel : décision exercice/continuation et mise à jour des cashflows  
-      • solve3x3 (device) : résolution d’un système linéaire 3×3 pour l’OLS  
-  - Mise en place des allocations GPU, transferts host/device, synchronisations et nettoyage mémoire.  
-  - Intégration complète dans Visual Studio :
-      • ajout du dossier cuda/ dans .vcxproj  
-      • ajout des filtres pour l’organisation dans l’explorateur de solutions  
-
-- Nettoyage du dépôt  
-  - Le push échouait systématiquement à ~72 %, avec :  
-    • “RPC failed”  
-    • “HTTP 408”  
-    • “remote end hung up unexpectedly”  
-  - Analyse : GitHub refusait un fichier >100 Mo (`trajectoires_gbm.csv` ~213 Mo) encore présent dans l’historique Git (même si supprimé physiquement).  
-  - Solutions appliquées :
-      • mise en place d’un `.gitignore` complet pour bloquer les CSV lourds, les x64/, binaires, Debug/, etc.  
-      • purge de tout l’historique Git avec `git filter-repo` pour supprimer définitivement les blobs >100 Mo  
-      • suppression complète des objets résiduels dans `.git/objects`  
-      • réinstallation propre de Git et de Git Credential Manager Core (les credentials corrompus bloquaient certains push)  
-      • force-push final pour publier l’historique propre sur GitHub  
-  - Résultat : dépôt allégé, propre, compatible GitHub, plus aucun blocage.
+Projet réalisé par **Florian Barbe** (et Narjisse) dans le cadre du module **LSMC** (Centrale Nantes, 2025).

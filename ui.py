@@ -8,6 +8,7 @@ from tkinter import ttk, filedialog, messagebox
 
 import numpy as np
 import pandas as pd
+import random
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -204,9 +205,24 @@ class LSMCUI:
         cmd += ["--N_steps", self.nsteps_var.get().strip()]
         cmd += ["--N_paths", self.npaths_var.get().strip()]
         cmd += ["--dump_paths", "1" if self.dump_paths_var.get() else "0"]
+        
+        # Random seed pour varier les paths
+        seed_val = random.randint(0, 999999)
+        cmd += ["--seed", str(seed_val)]
 
         self._console_clear()
         self._console_write("=== Lancement C++ ===\n")
+
+        # Nettoyage des anciens fichiers pour éviter de lire des vieux résultats
+        for fcsv in ["resultats_lsmc.csv", "paths.csv"]:
+            p = os.path.join(cwd, fcsv)
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                    self._console_write(f"[UI] Supprimé avant run: {fcsv}\n")
+                except Exception as e:
+                    self._console_write(f"[UI] Erreur suppression {fcsv}: {e}\n")
+
         self._console_write("CWD: " + cwd + "\n")
         self._console_write("CMD: " + " ".join(cmd) + "\n\n")
 
@@ -247,6 +263,10 @@ class LSMCUI:
         self.ax.clear()
 
         if os.path.exists(paths_path):
+            # Debug info
+            mtime = os.path.getmtime(paths_path)
+            self._console_write(f"\n[UI] Lecture paths.csv (mtime={mtime})\n")
+
             dfp = pd.read_csv(paths_path)
             time_cols = [c for c in dfp.columns if c.startswith("t")]
             if len(time_cols) > 0:
@@ -340,13 +360,27 @@ class LSMCUI:
 
         df = df.dropna(subset=["S0", "K", "r", "sigma", "T", "Prix"])
 
-        return df[
-            (np.abs(df["S0"] - cur["S0"]) <= tol) &
-            (np.abs(df["K"] - cur["K"]) <= tol) &
-            (np.abs(df["r"] - cur["r"]) <= tol) &
-            (np.abs(df["sigma"] - cur["sigma"]) <= tol) &
-            (np.abs(df["T"] - cur["T"]) <= tol)
-        ].copy()
+        self._console_write(f"[DEBUG] Filtering {len(df)} rows...\n")
+        self._console_write(f"[DEBUG] Target params: {cur}\n")
+
+        # Debug filter loop
+        kept_indices = []
+        for idx, row in df.iterrows():
+            failures = []
+            if np.abs(row["S0"] - cur["S0"]) > tol: failures.append(f"S0({row['S0']} vs {cur['S0']})")
+            if np.abs(row["K"] - cur["K"]) > tol: failures.append(f"K({row['K']} vs {cur['K']})")
+            if np.abs(row["r"] - cur["r"]) > tol: failures.append(f"r({row['r']} vs {cur['r']})")
+            if np.abs(row["sigma"] - cur["sigma"]) > tol: failures.append(f"sigma({row['sigma']} vs {cur['sigma']})")
+            if np.abs(row["T"] - cur["T"]) > tol: failures.append(f"T({row['T']} vs {cur['T']})")
+            
+            if not failures:
+                kept_indices.append(idx)
+            else:
+                self._console_write(f"[DEBUG] Row {idx} rejected: {', '.join(failures)}\n")
+
+        filtered_df = df.loc[kept_indices].copy()
+        self._console_write(f"[DEBUG] Rows kept: {len(filtered_df)}\n")
+        return filtered_df
 
     def _price_band_20pct(self, df):
         if "Prix" not in df.columns:
@@ -371,4 +405,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
